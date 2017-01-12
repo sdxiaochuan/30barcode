@@ -1,5 +1,37 @@
 <?php
 //var_dump($_FILES);
+
+define('BARCODE', true);
+//autoload
+include("barcode_lib.php");
+
+class Barcode
+{
+   public $number;
+   public $encoding;
+   public $scale;
+
+   protected $_encoder;
+
+   function __construct($encoding, $number=null, $scale=null)
+   {
+      $this->number = ($number==null) ? $this->_random() : $number;
+      $this->scale = ($scale==null || $scale<4) ? 4 : $scale;
+
+      // Reflection Class : Method
+
+      $this->_encoder = new EAN13($this->number, $this->scale);
+      $this->_encoder->display();
+   }
+
+
+   private function _random()
+   {
+     return substr(number_format(time() * rand(),0,'',''),0,12);
+   }
+}
+
+
 if ($_POST) {
     
     include_once './PHPExcel_1.8.0/Classes/PHPExcel.php';
@@ -55,8 +87,12 @@ if ($_POST) {
     for ($n = 0; $n < $products; $n ++) {
         
         if (isset($_POST['ean'][$n]) && !empty($_POST['ean'][$n])) {
-            $image =  $_FILES["barcode"]["tmp_name"][$n];
-            
+            //$image =  $_FILES["barcode"]["tmp_name"][$n];
+
+            //Create png files
+            new Barcode("EAN-13", $_POST['ean'][$n]);
+
+            $image = "./tmp/" . $_POST['ean'][$n] . ".png";
 //            $check = getimagesize($_FILES["barcode"][$n]["tmp_name"]);
 //            if($check !== false) {
 //                echo "File is an image - " . $check["mime"] . ".";
@@ -83,9 +119,9 @@ if ($_POST) {
                 $objDrawing = new PHPExcel_Worksheet_Drawing();
                 $objDrawing->setPath($image);
                 $objDrawing->setResizeProportional(false);
-                $objDrawing->setHeight(60);
-                $objDrawing->setWidth(200);
-                $objDrawing->setOffsetX(15);
+                $objDrawing->setHeight(55);
+                $objDrawing->setWidth(210);
+                $objDrawing->setOffsetX(0);
                 $objDrawing->setOffsetY(10);
                 $objDrawing->setCoordinates($unit);
                 $objDrawing->setWorksheet($objPHPExcel->getActiveSheet());
